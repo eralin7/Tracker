@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Привычки</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #060d1f;
+    --surface: #0d1a35;
+    --surface2: #112040;
+    --accent: #2563eb;
+    --accent2: #3b82f6;
+    --red: #ef4444;
+    --gold: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --border: rgba(255,255,255,0.06);
+    --glow: rgba(37,99,235,0.3);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: auto;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(37,99,235,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(139,92,246,0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    padding: 24px 16px;
+    max-width: 100%;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    gap: 16px;
+  }
+
+  .avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    box-shadow: 0 0 20px var(--glow);
+  }
+
+  h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(22px, 5vw, 32px);
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff 40%, var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    flex: 1;
+  }
+
+  .month-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .month-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .month-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .current-month {
+    font-weight: 600;
+    color: var(--text);
+    min-width: 100px;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  /* Add habit */
+  .add-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .add-bar input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .add-bar input:focus { border-color: var(--accent); }
+  .add-bar input::placeholder { color: var(--muted); }
+
+  .add-bar button {
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .add-bar button:hover { background: var(--accent2); transform: scale(1.05); }
+
+  /* Table wrapper */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: 0 4px 40px rgba(0,0,0,0.4);
+  }
+
+  table {
+    border-collapse: collapse;
+    min-width: 100%;
+  }
+
+  /* Day headers */
+  thead th {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 6px;
+    color: var(--muted);
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    text-align: center;
+    min-width: 36px;
+  }
+
+  thead th:first-child {
+    text-align: left;
+    padding-left: 20px;
+    min-width: 220px;
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background: var(--surface2);
+  }
+
+  thead th.today-col {
+    color: var(--accent2);
+    position: relative;
+  }
+
+  thead th.weekend {
+    color: var(--red);
+    opacity: 0.8;
+  }
+
+  /* Rows */
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    animation: fadeIn 0.3s ease both;
+  }
+
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  tbody tr:last-child { border-bottom: none; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Habit name cell */
+  .habit-cell {
+    padding: 12px 16px 12px 20px;
+    position: sticky;
+    left: 0;
+    background: var(--surface);
+    z-index: 5;
+    border-right: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover .habit-cell { background: var(--surface2); }
+
+  .habit-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .emoji { font-size: 16px; flex-shrink: 0; }
+
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.2s, color 0.2s;
+    padding: 2px 4px;
+    margin-left: 4px;
+    flex-shrink: 0;
+  }
+
+  tbody tr:hover .delete-btn { opacity: 1; }
+  .delete-btn:hover { color: var(--red); }
+
+  /* Checkbox cells */
+  td.check-cell {
+    text-align: center;
+    padding: 0;
+    min-width: 36px;
+  }
+
+  td.check-cell.today-col {
+    background: rgba(37,99,235,0.07);
+  }
+
+  .checkbox {
+    width: 22px;
+    height: 22px;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    margin: 9px 7px;
+    flex-shrink: 0;
+    font-size: 13px;
+  }
+
+  .checkbox:hover { border-color: var(--accent2); transform: scale(1.15); }
+
+  .checkbox.done {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 8px rgba(37,99,235,0.5);
+  }
+
+  .checkbox.today-box {
+    border-color: rgba(37,99,235,0.5);
+  }
+
+  /* Footer stats */
+  .stats-row {
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+  }
+
+  .stats-row td {
+    padding: 10px 8px;
+    font-size: 11px;
+    text-align: center;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .stats-row td:first-child {
+    text-align: left;
+    padding-left: 20px;
+    position: sticky;
+    left: 0;
+    background: var(--surface2);
+    z-index: 5;
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .stat-num {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  /* Progress */
+  .progress-section {
+    margin-top: 20px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .progress-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .progress-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .progress-value {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .progress-bar-wrap {
+    margin-top: 10px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px;
+    height: 4px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), #7c3aed);
+    transition: width 0.4s ease;
+  }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .emoji-picker {
+    position: relative;
+  }
+
+  .emoji-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s;
+  }
+
+  .emoji-btn:hover { border-color: var(--accent); }
+
+  .emoji-dropdown {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 200px;
+    z-index: 100;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    display: none;
+  }
+
+  .emoji-dropdown.open { display: flex; }
+
+  .emoji-opt {
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+
+  .emoji-opt:hover { background: var(--border); }
+
+  @media (max-width: 500px) {
+    thead th:first-child { min-width: 160px; }
+    h1 { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="avatar">🏆</div>
+    <h1>Привычки</h1>
+    <div class="month-nav">
+      <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+      <span class="current-month" id="monthLabel"></span>
+      <button class="month-btn" onclick="changeMonth(1)">›</button>
+    </div>
+  </div>
+
+  <div class="add-bar">
+    <div class="emoji-picker">
+      <button class="emoji-btn" id="emojiBtn" onclick="toggleEmoji()">🤘</button>
+      <div class="emoji-dropdown" id="emojiDrop">
+        <span class="emoji-opt" onclick="pickEmoji('🤘')">🤘</span>
+        <span class="emoji-opt" onclick="pickEmoji('🥚')">🥚</span>
+        <span class="emoji-opt" onclick="pickEmoji('⚽')">⚽</span>
+        <span class="emoji-opt" onclick="pickEmoji('👔')">👔</span>
+        <span class="emoji-opt" onclick="pickEmoji('😘')">😘</span>
+        <span class="emoji-opt" onclick="pickEmoji('🇬🇧')">🇬🇧</span>
+        <span class="emoji-opt" onclick="pickEmoji('🍺')">🍺</span>
+        <span class="emoji-opt" onclick="pickEmoji('📚')">📚</span>
+        <span class="emoji-opt" onclick="pickEmoji('💪')">💪</span>
+        <span class="emoji-opt" onclick="pickEmoji('🧘')">🧘</span>
+        <span class="emoji-opt" onclick="pickEmoji('💧')">💧</span>
+        <span class="emoji-opt" onclick="pickEmoji('🌙')">🌙</span>
+        <span class="emoji-opt" onclick="pickEmoji('🏃')">🏃</span>
+        <span class="emoji-opt" onclick="pickEmoji('✍️')">✍️</span>
+        <span class="emoji-opt" onclick="pickEmoji('🎯')">🎯</span>
+        <span class="emoji-opt" onclick="pickEmoji('🎸')">🎸</span>
+        <span class="emoji-opt" onclick="pickEmoji('🥗')">🥗</span>
+        <span class="emoji-opt" onclick="pickEmoji('🚫')">🚫</span>
+        <span class="emoji-opt" onclick="pickEmoji('⭐')">⭐</span>
+        <span class="emoji-opt" onclick="pickEmoji('🔥')">🔥</span>
+      </div>
+    </div>
+    <input type="text" id="habitInput" placeholder="Новая привычка..." onkeydown="if(event.key==='Enter') addHabit()">
+    <button onclick="addHabit()">+</button>
+  </div>
+
+  <div class="table-wrap" id="tableWrap">
+    <div class="empty" id="emptyState">Добавьте первую привычку ☝️</div>
+    <table id="habitTable" style="display:none">
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody"></tbody>
+      <tfoot id="tableFoot"></tfoot>
+    </table>
+  </div>
+
+  <div class="progress-section" id="progressSection" style="display:none">
+    <div class="progress-card">
+      <div class="progress-label">Прогресс</div>
+      <div class="progress-value" id="progressPct">0%</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+    </div>
+    <div class="progress-card">
+      <div class="progress-label">Выполнено</div>
+      <div class="progress-value" id="progressDone">0</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar2" style="width:0%; background: linear-gradient(90deg,#10b981,#059669)"></div></div>
+    </div>
+    <div class="progress-card">
+      <div class="progress-label">Дней подряд 🔥</div>
+      <div class="progress-value" id="progressStreak">0</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar3" style="width:0%; background: linear-gradient(90deg,#f59e0b,#ef4444)"></div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const DAYS_RU = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
+
+  let now = new Date();
+  let viewYear = now.getFullYear();
+  let viewMonth = now.getMonth();
+  let selectedEmoji = '🤘';
+
+  // Storage
+  function saveData() {
+    localStorage.setItem('habits_v2', JSON.stringify({ habits, checks }));
+  }
+  function loadData() {
+    try {
+      const d = JSON.parse(localStorage.getItem('habits_v2') || '{}');
+      habits = d.habits || defaultHabits();
+      checks = d.checks || {};
+    } catch { habits = defaultHabits(); checks = {}; }
+  }
+
+  function defaultHabits() {
+    return [
+      { id: 1, emoji: '🤘', name: 'открывать таблицу каждый день' },
+      { id: 2, emoji: '🥚', name: 'Белковый завтрак' },
+      { id: 3, emoji: '⚽', name: 'Физическая активность 30 мин' },
+      { id: 4, emoji: '👔', name: 'Подготовить одежду на утро' },
+      { id: 5, emoji: '😘', name: 'Убрать гаджеты за час до сна' },
+      { id: 6, emoji: '🇬🇧', name: 'Занятия английским' },
+      { id: 7, emoji: '🍺', name: 'Бахнуть пивка с Гаврилом' },
+    ];
+  }
+
+  let habits = [];
+  let checks = {};
+  loadData();
+
+  function checkKey(hid, day, y, m) { return `${hid}_${y !== undefined ? y : viewYear}_${m !== undefined ? m : viewMonth}_${day}`; }
+
+  function daysInMonth(y, m) { return new Date(y, m+1, 0).getDate(); }
+
+  function render() {
+    const days = daysInMonth(viewYear, viewMonth);
+    const todayDay = (viewYear === now.getFullYear() && viewMonth === now.getMonth()) ? now.getDate() : -1;
+
+    document.getElementById('monthLabel').textContent = MONTHS_RU[viewMonth] + ' ' + viewYear;
+
+    const empty = document.getElementById('emptyState');
+    const table = document.getElementById('habitTable');
+    const progress = document.getElementById('progressSection');
+
+    if (habits.length === 0) {
+      empty.style.display = '';
+      table.style.display = 'none';
+      progress.style.display = 'none';
+      return;
+    }
+    empty.style.display = 'none';
+    table.style.display = '';
+    progress.style.display = '';
+
+    // Head
+    let headHtml = '<tr><th>Привычка</th>';
+    for (let d = 1; d <= days; d++) {
+      const dow = new Date(viewYear, viewMonth, d).getDay();
+      const isToday = d === todayDay;
+      const isWeekend = dow === 0 || dow === 6;
+      headHtml += `<th class="${isToday ? 'today-col' : ''} ${isWeekend ? 'weekend' : ''}">
+        <div>${DAYS_RU[dow]}</div><div style="font-size:12px;font-weight:700;color:${isToday ? '#3b82f6' : 'inherit'}">${d}</div>
+      </th>`;
+    }
+    headHtml += '</tr>';
+    document.getElementById('tableHead').innerHTML = headHtml;
+
+    // Body
+    let bodyHtml = '';
+    habits.forEach((h, idx) => {
+      bodyHtml += `<tr style="animation-delay:${idx*0.04}s">
+        <td class="habit-cell">
+          <div class="habit-name">
+            <span class="emoji">${h.emoji}</span>
+            <span>${h.name}</span>
+            <button class="delete-btn" onclick="deleteHabit(${h.id})" title="Удалить">✕</button>
+          </div>
+        </td>`;
+      for (let d = 1; d <= days; d++) {
+        const key = checkKey(h.id, d);
+        const done = !!checks[key];
+        const isToday = d === todayDay;
+        bodyHtml += `<td class="check-cell ${isToday ? 'today-col' : ''}">
+          <div class="checkbox ${done ? 'done' : ''} ${isToday && !done ? 'today-box' : ''}" onclick="toggle(${h.id},${d},this)">
+            ${done ? '✓' : ''}
+          </div>
+        </td>`;
+      }
+      bodyHtml += '</tr>';
+    });
+    document.getElementById('tableBody').innerHTML = bodyHtml;
+
+    // Foot — completion count per day
+    let footHtml = '<tr class="stats-row"><td>Выполнено</td>';
+    let totalPossible = 0, totalDone = 0;
+    for (let d = 1; d <= days; d++) {
+      let cnt = 0;
+      habits.forEach(h => { if (checks[checkKey(h.id, d)]) cnt++; });
+      const pct = habits.length > 0 ? Math.round(cnt / habits.length * 100) : 0;
+      const color = cnt === habits.length && cnt > 0 ? '#10b981' : cnt > 0 ? '#3b82f6' : 'var(--muted)';
+      footHtml += `<td><span class="stat-num" style="color:${color}">${cnt}</span></td>`;
+      if (d <= todayDay || todayDay === -1) { totalPossible += habits.length; totalDone += cnt; }
+    }
+    footHtml += '</tr>';
+    document.getElementById('tableFoot').innerHTML = footHtml;
+
+    // Progress cards
+    const pct = totalPossible > 0 ? Math.round(totalDone / totalPossible * 100) : 0;
+    document.getElementById('progressPct').textContent = pct + '%';
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressDone').textContent = totalDone;
+    document.getElementById('progressBar2').style.width = (totalPossible > 0 ? Math.round(totalDone/totalPossible*100) : 0) + '%';
+
+    // Streak — consecutive days where at least 1 habit is done, going back from today across months
+    let streak = 0;
+    if (habits.length > 0) {
+      let cur = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      for (let i = 0; i < 365; i++) {
+        const y = cur.getFullYear(), m = cur.getMonth(), d = cur.getDate();
+        const anyDone = habits.some(h => {
+          const key = `${h.id}_${y}_${m}_${d}`;
+          return !!checks[key];
+        });
+        if (anyDone) {
+          streak++;
+          cur.setDate(cur.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+    }
+    document.getElementById('progressStreak').textContent = streak;
+    document.getElementById('progressBar3').style.width = Math.min(streak * 10, 100) + '%';
+  }
+
+  function toggle(hid, day, el) {
+    const key = checkKey(hid, day, viewYear, viewMonth);
+    checks[key] = !checks[key];
+    el.classList.toggle('done', checks[key]);
+    el.classList.toggle('today-box', !checks[key]);
+    el.textContent = checks[key] ? '✓' : '';
+    if (checks[key]) {
+      el.style.transform = 'scale(1.3)';
+      setTimeout(() => el.style.transform = '', 200);
+    }
+    saveData();
+    // Update foot & progress without full re-render
+    render();
+  }
+
+  function addHabit() {
+    const input = document.getElementById('habitInput');
+    const name = input.value.trim();
+    if (!name) return;
+    const id = Date.now();
+    habits.push({ id, emoji: selectedEmoji, name });
+    input.value = '';
+    saveData();
+    render();
+  }
+
+  function deleteHabit(id) {
+    habits = habits.filter(h => h.id !== id);
+    saveData();
+    render();
+  }
+
+  function changeMonth(delta) {
+    viewMonth += delta;
+    if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+    if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+    render();
+  }
+
+  function toggleEmoji() {
+    document.getElementById('emojiDrop').classList.toggle('open');
+  }
+
+  function pickEmoji(e) {
+    selectedEmoji = e;
+    document.getElementById('emojiBtn').textContent = e;
+    document.getElementById('emojiDrop').classList.remove('open');
+  }
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.emoji-picker')) {
+      document.getElementById('emojiDrop').classList.remove('open');
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
