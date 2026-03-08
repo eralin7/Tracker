@@ -201,9 +201,9 @@ th.name-col, td.name-col {
   left: 0;
   z-index: 10;
   background: var(--surface2);
-  min-width: 150px;
-  max-width: 150px;
-  width: 150px;
+  min-width: 190px;
+  max-width: 190px;
+  width: 190px;
 }
 td.name-col { background: var(--surface); }
 
@@ -251,10 +251,11 @@ tbody tr:last-child { border-bottom: none; }
   font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
+  overflow: hidden;
 }
 
 .h-emoji { font-size: 15px; flex-shrink: 0; }
-.h-text { overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+.h-text { overflow: hidden; text-overflow: ellipsis; max-width: 140px; white-space: nowrap; }
 
 .del-btn {
   background: none;
@@ -504,7 +505,15 @@ let habits = [], checks = {};
 function save() { localStorage.setItem('htrk3', JSON.stringify({habits, checks})); }
 function load() {
   try {
-    const d = JSON.parse(localStorage.getItem('htrk3') || '{}');
+    const raw = localStorage.getItem('htrk3');
+    if (!raw) {
+      // First run — clear any old keys from previous versions
+      ['habits_v2','habits_v1'].forEach(k => localStorage.removeItem(k));
+      habits = defaults();
+      checks = {};
+      return;
+    }
+    const d = JSON.parse(raw);
     habits = d.habits || defaults();
     checks = d.checks || {};
   } catch { habits = defaults(); checks = {}; }
@@ -517,7 +526,6 @@ function defaults() {
     {id:4, emoji:'👔', name:'Подготовить одежду на утро'},
     {id:5, emoji:'😘', name:'Убрать гаджеты за час до сна'},
     {id:6, emoji:'🇬🇧', name:'Занятия английским'},
-    {id:7, emoji:'🍺', name:'Бахнуть пивка с Гаврилом'},
   ];
 }
 
@@ -626,7 +634,7 @@ function render() {
     render._scrolled = true;
     setTimeout(() => {
       const wrap = document.getElementById('tableWrap');
-      // approx 150px name col + 40px per day
+      // approx 190px name col + 40px per day
       wrap.scrollLeft = Math.max(0, (todayD - 3) * 40);
     }, 100);
   }
